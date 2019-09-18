@@ -68,11 +68,7 @@ def train_model(model, dataloaders, criterion, optimizer, sc_plt, writer, device
                 running_loss += loss.item()
                 running_corrects += 0#torch.sum(preds == labels.data)
                 if phase == 'train':
-                    if iterations % 100 == 0:
-                        # Calculate 1/10th of batch size
-                        #num_imgs = reference_img.shape[0] // 10
-                        #writer.add_images('/run/preds', preds[0:num_imgs].unsqueeze(1), iterations)
-                        #writer.add_images('/run/labels', labels[0:num_imgs].unsqueeze(1), iterations)
+                    if iterations % 100 == 0:                        
                         pass
                     iterations += 1
 
@@ -83,8 +79,8 @@ def train_model(model, dataloaders, criterion, optimizer, sc_plt, writer, device
             
             writer.add_scalar('epoch/loss_' + phase, epoch_loss, epoch)
             if phase == 'val':
-                writer.add_scalar('metrics/iou_val', np.mean(list_dice_val), epoch)
-    
+                writer.add_histogram(phase + '/Labels', labels, epoch)
+                writer.add_histogram(phase + '/Outputs', outputs, epoch)                    
             
             # Update Scheduler if training loss doesn't change for patience(2) epochs
             if phase == 'train':
@@ -100,9 +96,7 @@ def train_model(model, dataloaders, criterion, optimizer, sc_plt, writer, device
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
             if phase == 'val':
-                val_acc_history.append(epoch_acc)        
-    
-    print('Best val Acc: {:4f}'.format(best_acc))
+                val_acc_history.append(epoch_acc)                
 
     # load best model weights
     model.load_state_dict(best_model_wts)
