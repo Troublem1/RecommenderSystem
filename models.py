@@ -10,7 +10,9 @@ class MatrixFactorization(torch.nn.Module):
         # create item embeddings
         self.movie_emb = torch.nn.Embedding(num_movies, n_factors,sparse=True)
 
-    def forward(self, user, movie):
+    def forward(self, x):
+        user = x[0]
+        movie = x[1]
         # matrix multiplication
         return (self.user_emb(user)*self.movie_emb(movie)).sum(1)
 
@@ -25,7 +27,9 @@ class DenseNet(nn.Module):
         self.linear1 = torch.nn.Linear(n_factors*2, H1)
         self.linear2 = torch.nn.Linear(H1, D_out)
 
-    def forward(self, user, movie):
+    def forward(self, x):
+        user = x[0]
+        movie = x[1]
         users_embedding = self.user_emb(users)
         movies_embedding = self.movie_emb(movie)
         # concatenate user and item embeddings to form input
