@@ -10,10 +10,9 @@ import copy
 
 
 def train_model(model, dataloaders, criterion, optimizer, sc_plt, writer, device, num_epochs=25):    
-    val_acc_history = []
-
+    
     best_model_wts = copy.deepcopy(model.state_dict())
-    best_acc = 0.0
+    best_loss = 100000
     iterations = 0
 
     for epoch in range(num_epochs):
@@ -45,19 +44,18 @@ def train_model(model, dataloaders, criterion, optimizer, sc_plt, writer, device
                     # Get model outputs and calculate loss                    
                     outputs = model([user_batch, movie_batch])
                     
-                    # Calculate Loss
-                    #print('outputs.shape:', torch.max(outputs))
-                    #print('labels.shape:', torch.max(labels))
+                    # Calculate Loss                    
                     loss = criterion(outputs, labels)
-
-                    # Get the correct class by looking for the max value across channels
-                    #_, preds = torch.max(outputs, 1)
+                    if phase == 'train':
+                        if iterations % 100 == 0:
+                            pass
+                            #writer.add_scalars('/train/text/outputs', outputs, iterations)
+                            #writer.add_scalars('/train/text/labels', labels, iterations)                            
+                    
                     
                     # Calculate metric during evaluation
                     if phase == 'val':
-                        pass
-                        #dice_value = seg_metrics.iou_segmentation(preds.squeeze(1).type(torch.LongTensor), (labels>0).type(torch.LongTensor))
-                        #list_dice_val.append(dice_value.item())
+                        pass                        
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
@@ -65,15 +63,13 @@ def train_model(model, dataloaders, criterion, optimizer, sc_plt, writer, device
                         optimizer.step()
 
                 # statistics
-                running_loss += loss.item()
-                running_corrects += 0#torch.sum(preds == labels.data)
+                running_loss += loss.item()                
                 if phase == 'train':
                     if iterations % 100 == 0:                        
                         pass
                     iterations += 1
 
-            epoch_loss = running_loss / len(dataloaders[phase].dataset)
-            epoch_acc = 0.0#running_corrects.double() / len(dataloaders[phase].dataset)
+            epoch_loss = running_loss / len(dataloaders[phase].dataset)            
 
             print('{} Loss: {:.4f}'.format(phase, epoch_loss))
             
@@ -92,12 +88,11 @@ def train_model(model, dataloaders, criterion, optimizer, sc_plt, writer, device
                     writer.add_scalar('epoch/learning_rate_' + phase, curr_learning_rate, epoch)
 
             # deep copy the model and save if accuracy is better
-            if phase == 'val' and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                best_model_wts = copy.deepcopy(model.state_dict())
             if phase == 'val':
-                val_acc_history.append(epoch_acc)                
+                if epoch_loss < best_loss:
+                    best_loss = epoch_loss
+                    best_model_wts = copy.deepcopy(model.state_dict())                          
 
     # load best model weights
     model.load_state_dict(best_model_wts)
-    return model, val_acc_history
+    return model
